@@ -62,14 +62,14 @@ class VistaClass(QueryWithLogin):
                    'deep_stack': 'deep%stack', 'confidence': 'conf',
                    'difference': 'diff', 'leavstack': 'leavstack', 'all': 'all'}
 
-    ukidss_programmes_short = {'VHS': 110,
+    vista_programmes_short = {'VHS': 110,
                                'VVV': 120,
                                'VMC': 130,
                                'VIKING': 140,
                                'VIDEO': 150,
                                'UltraVISTA': 160, }
 
-    ukidss_programmes_long = {'VISTA Hempisphere Survey': 110,
+    vista_programmes_long = {'VISTA Hempisphere Survey': 110,
                               'VISTA Variables in the Via Lactea': 120,
                               'VISTA Magellanic Clouds Survey': 130,
                               'VISTA Kilo-degree Infrared Galaxy Survey': 140,
@@ -363,7 +363,7 @@ class VistaClass(QueryWithLogin):
         if get_query_payload:
             return request_payload
 
-        response = self._ukidss_send_request(query_url, request_payload)
+        response = self._vista_send_request(query_url, request_payload)
         response = self._check_page(response.url, "row")
 
         image_urls = self.extract_urls(response.content)
@@ -506,11 +506,12 @@ class VistaClass(QueryWithLogin):
         request_payload['rows'] = 1
         request_payload['select'] = 'default'
         request_payload['where'] = ''
+        request_payload['archive'] = 'VSA'
 
         if get_query_payload:
             return request_payload
 
-        response = self._ukidss_send_request(self.REGION_URL, request_payload)
+        response = self._vista_send_request(self.REGION_URL, request_payload)
         response = self._check_page(response.url, "query finished")
 
         return response
@@ -575,13 +576,13 @@ class VistaClass(QueryWithLogin):
         list : list containing catalog name strings in long or short style.
         """
         if style == 'short':
-            return list(self.ukidss_programmes_short.keys())
+            return list(self.vista_programmes_short.keys())
         elif style == 'long':
-            return list(self.ukidss_programmes_long.keys())
+            return list(self.vista_programmes_long.keys())
         else:
             warnings.warn("Style must be one of 'long', 'short'.\n"
                           "Returning catalog list in short format.\n")
-            return list(self.ukidss_programmes_short.keys())
+            return list(self.vista_programmes_short.keys())
 
     def list_databases(self):
         """
@@ -589,7 +590,7 @@ class VistaClass(QueryWithLogin):
         """
         return self.databases
 
-    def _ukidss_send_request(self, url, request_payload):
+    def _vista_send_request(self, url, request_payload):
         """
         Helper function that sends the query request via a session or simple
         HTTP GET request.
@@ -633,14 +634,14 @@ class VistaClass(QueryWithLogin):
 Vista = VistaClass()
 
 
-def clean_catalog(ukidss_catalog, clean_band='K_1', badclass=-9999,
+def clean_catalog(vista_catalog, clean_band='K_1', badclass=-9999,
                   maxerrbits=41, minerrbits=0, maxpperrbits=60):
     """
     Attempt to remove 'bad' entries in a catalog.
 
     Parameters
     ----------
-    ukidss_catalog : `~astropy.io.fits.BinTableHDU`
+    vista_catalog : `~astropy.io.fits.BinTableHDU`
         A FITS binary table instance from the VISTA survey.
     clean_band : ``'K_1'``, ``'K_2'``, ``'J'``, ``'H'``
         The band to use for bad photometry flagging.
@@ -657,18 +658,18 @@ def clean_catalog(ukidss_catalog, clean_band='K_1', badclass=-9999,
     """
 
     band = clean_band
-    mask = ((ukidss_catalog[band + 'ERRBITS'] <= maxerrbits)
-            * (ukidss_catalog[band + 'ERRBITS'] >= minerrbits)
-            * ((ukidss_catalog['PRIORSEC'] == ukidss_catalog['FRAMESETID'])
-                + (ukidss_catalog['PRIORSEC'] == 0))
-            * (ukidss_catalog[band + 'PPERRBITS'] < maxpperrbits)
+    mask = ((vista_catalog[band + 'ERRBITS'] <= maxerrbits)
+            * (vista_catalog[band + 'ERRBITS'] >= minerrbits)
+            * ((vista_catalog['PRIORSEC'] == vista_catalog['FRAMESETID'])
+                + (vista_catalog['PRIORSEC'] == 0))
+            * (vista_catalog[band + 'PPERRBITS'] < maxpperrbits)
             )
-    if band+'CLASS' in ukidss_catalog.colnames:
-        mask *= (ukidss_catalog[band + 'CLASS'] != badclass)
-    elif 'mergedClass' in ukidss_catalog.colnames:
-        mask *= (ukidss_catalog['mergedClass'] != badclass)
+    if band+'CLASS' in vista_catalog.colnames:
+        mask *= (vista_catalog[band + 'CLASS'] != badclass)
+    elif 'mergedClass' in vista_catalog.colnames:
+        mask *= (vista_catalog['mergedClass'] != badclass)
 
-    return ukidss_catalog.data[mask]
+    return vista_catalog.data[mask]
 
 
 def verify_programme_id(pid, query_type='catalog'):
@@ -696,11 +697,11 @@ def verify_programme_id(pid, query_type='catalog'):
         return 'all'
     elif pid == 'all' and query_type == 'catalog':
         raise ValueError("Cannot query all catalogs at once. Valid catalogs are: {0}.  Change programmeID to one of these.".format(
-            ",".join(VistaClass.ukidss_programmes_short.keys())))
-    elif pid in VistaClass.ukidss_programmes_long:
-        return VistaClass.ukidss_programmes_long[pid]
-    elif pid in VistaClass.ukidss_programmes_short:
-        return VistaClass.ukidss_programmes_short[pid]
+            ",".join(VistaClass.vista_programmes_short.keys())))
+    elif pid in VistaClass.vista_programmes_long:
+        return VistaClass.vista_programmes_long[pid]
+    elif pid in VistaClass.vista_programmes_short:
+        return VistaClass.vista_programmes_short[pid]
     elif query_type != 'image':
         raise ValueError("programme_id {0} not recognized".format(pid))
 
