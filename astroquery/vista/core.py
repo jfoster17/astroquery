@@ -60,7 +60,8 @@ class VistaClass(QueryWithLogin):
 
     frame_types = {'stack': 'stack', 'normal': 'normal', 'interleave': 'leav',
                    'deep_stack': 'deep%stack', 'confidence': 'conf',
-                   'difference': 'diff', 'leavstack': 'leavstack', 'all': 'all'}
+                   'difference': 'diff', 'leavstack': 'leavstack', 'all': 'all',
+                    'tilestack':'tilestack'}
 
     vista_programmes_short = {'VHS': 110,
                                'VVV': 120,
@@ -332,6 +333,8 @@ class VistaClass(QueryWithLogin):
         request_payload['obsType'] = 'object'
         request_payload['frameType'] = self.frame_types[frame_type]
         request_payload['mfid'] = ''
+        request_payload['deprecated'] = 0 #This does not work
+        
         if radius is None:
             request_payload['xsize'] = _parse_dimension(image_width)
             request_payload['ysize'] = _parse_dimension(image_width) if image_height is None else _parse_dimension(image_height)
@@ -359,7 +362,7 @@ class VistaClass(QueryWithLogin):
             request_payload['lmfid'] = ''
             request_payload['fsid'] = ''
             request_payload['rows'] = 1000
-
+            
         if get_query_payload:
             return request_payload
 
@@ -375,7 +378,7 @@ class VistaClass(QueryWithLogin):
                                                           '_two.fit' not in link)]
         else:
             image_urls = [link.replace("getImage", "getFImage")
-                          for link in image_urls]
+                          for link in image_urls if '_conf.fit' not in link]
 
         return image_urls
 
