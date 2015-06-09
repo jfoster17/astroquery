@@ -168,8 +168,9 @@ For other coordinate systems, use the appropriate `astropy.coordinates` object:
     >>> from astroquery.simbad import Simbad
     >>> import astropy.coordinates as coord
     >>> import astropy.units as u
-    >>> result_table = Simbad.query_region(coord.Galactic(l=31.0087, b=14.0627,
-    ...                                    unit=(u.deg, u.deg)), radius='0d0m2s')
+    >>> result_table = Simbad.query_region(coord.SkyCoord(31.0087, 14.0627,
+    ...                                    unit=(u.deg, u.deg), frame='galactic'),
+    ...                                    radius='0d0m2s')
     >>> print(result_table)
 
                 MAIN_ID             RA      ... COO_WAVELENGTH     COO_BIBCODE    
@@ -224,7 +225,9 @@ instance to query the ESO catalog:
 .. code-block:: python
 
     >>> from astroquery.simbad import Simbad
-    >>> result_table = Simbad.query_catalog('eso')
+    >>> limitedSimbad = Simbad()
+    >>> limitedSimbad.ROW_LIMIT = 6
+    >>> result_table = limitedSimbad.query_catalog('eso')
     >>> print(result_table)
 
     MAIN_ID              RA      ... COO_WAVELENGTH     COO_BIBCODE    
@@ -305,6 +308,63 @@ from a given journal in a given year:
     Aluminium oxide in the optical spectrum of VY Canis Majoris.
     Files: (abstract)
 
+Query object identifiers
+------------------------
+
+
+These queries can be used to retrieve all of the names (identifiers)
+associated with an object.
+
+.. code-block:: python
+
+    >>> from astroquery.simbad import Simbad
+    >>> result_table = Simbad.query_objectids("Polaris")
+    >>> print(result_table)
+	     ID         
+    --------------------
+	    ADS  1477 AP
+	    ** STF   93A
+	WDS J02318+8916A
+	     ** WRH   39
+	   NAME Lodestar
+		PLX  299
+		 SBC9 76
+	       *   1 UMi
+	       * alf UMi
+	   AAVSO 0122+88
+	     ADS  1477 A
+	      AG+89    4
+	     BD+88     8
+       CCDM J02319+8915A
+	 CSI+88     8  1
+		FK5  907
+		GC  2243
+	      GCRV  1037
+       GEN# +1.00008890A
+	 GSC 04628-00237
+	       HD   8890
+	      HIC  11767
+	      HIP  11767
+		HR   424
+	IDS 01226+8846 A
+	 IRAS 01490+8901
+	      JP11   498
+		N30  381
+	 NAME NORTH STAR
+	    NAME POLARIS
+	 PMC 90-93   640
+	      PPM    431
+	       ROT  3491
+	      SAO    308
+	      SBC7    51
+	      SKY#  3738
+	       TD1   835
+	  TYC 4628-237-1
+	     UBV   21589
+	    UBV M   8201
+	      V* alf UMi
+	     PLX  299.00
+    WDS J02318+8916Aa,Ab
 
 Query a bibobj
 --------------
@@ -438,17 +498,18 @@ To set additional fields to be returned in the VOTable:
 .. code-block:: python
      
      >>> from astroquery.simbad import Simbad
+     >>> customSimbad = Simbad()
 
      # see which fields are currently set
 
-     >>> Simbad.get_votable_fields()
+     >>> customSimbad.get_votable_fields()
 
      ['main_id', 'coordinates']
 
      # To set other fields 
 
-     >>> Simbad.add_votable_fields('mk', 'rot', 'bibcodelist(1800-2014)')
-     >>> Simbad.get_votable_fields()
+     >>> customSimbad.add_votable_fields('mk', 'rot', 'bibcodelist(1800-2014)')
+     >>> customSimbad.get_votable_fields()
 
      ['main_id', 'coordinates', 'mk', 'rot', 'bibcodelist(1800-2014')]
 
@@ -457,15 +518,15 @@ Continuing from the above example:
 
 .. code-block:: python
 
-    >>> Simbad.rm_votable_fields('mk', 'coordinates')
-    >>> Simbad.get_votable_fields()
+    >>> customSimbad.remove_votable_fields('mk', 'coordinates')
+    >>> customSimbad.get_votable_fields()
      
     ['rot', 'main_id']
     
     # reset back to defaults
     
-    >>> Simbad.reset_votable_fields()
-    >>> Simbad.get_votable_fields()
+    >>> customSimbad.reset_votable_fields()
+    >>> customSimbad.get_votable_fields()
 
     ['main_id', 'coordinates']
 

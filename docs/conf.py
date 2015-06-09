@@ -29,8 +29,18 @@ import datetime
 import os
 import sys
 
+try:
+    import astropy_helpers
+except ImportError:
+    # Building from inside the docs/ directory?
+    if os.path.basename(os.getcwd()) == 'docs':
+        a_h_path = os.path.abspath(os.path.join('..', 'astropy_helpers'))
+        if os.path.isdir(a_h_path):
+            sys.path.insert(1, a_h_path)
+
 # Load all of the global Astropy configuration
-from astropy.sphinx.conf import *
+from astropy_helpers.sphinx.conf import *
+from astropy.extern.six.moves import urllib
 
 # Get configuration information from setup.cfg
 from distutils import config
@@ -41,11 +51,16 @@ setup_cfg = dict(conf.items('metadata'))
 # -- General configuration ----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.1'
+#needs_sphinx = '1.2'
+
+# To perform a Sphinx version check that needs to be more specific than
+# major.minor, call `check_sphinx_version("x.y.z")` here.
+# check_sphinx_version("1.2.1")
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 exclude_patterns.append('_templates')
+exclude_patterns.append('release_not*')
 
 # This is added to the end of RST files - a good place to put substitutions to
 # be used globally.
@@ -56,6 +71,16 @@ del intersphinx_mapping['scipy']
 del intersphinx_mapping['h5py']
 intersphinx_mapping['astropy'] = ('http://docs.astropy.org/en/latest/', None)
 intersphinx_mapping['requests'] = ('http://docs.python-requests.org/en/latest/', None)
+try:
+    code = urllib.request.urlopen('http://docs.scipy.org/doc/numpy/objects.inv', timeout=10).getcode()
+    if code == 200:
+        numpyOK = True
+    else:
+        numpyOK = False
+except urllib.error.URLError:
+    numpyOK = False
+if not numpyOK:
+    intersphinx_mapping['numpy'] = ('http://jiffyclub.github.io/numpy/', None)
 
 # -- Project information ------------------------------------------------------
 
@@ -156,33 +181,19 @@ class Mock(object):
         else:
             return Mock()
 
-MOCK_MODULES = ['atpy', 'beautifulsoup4', 'vo', 'requests', 'lxml', 'keyring']
+MOCK_MODULES = ['atpy', 'beautifulsoup4', 'vo', 'lxml', 'keyring', 'bs4']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
 
 ## -- Options for the edit_on_github extension ----------------------------------------
 #
-extensions += ['astropy.sphinx.ext.edit_on_github']
-
-# Don't import the module as "version" or it will override the
-# "version" configuration parameter
-from astroquery import version as versionmod
-edit_on_github_project = "astropy/astroquery"
-if versionmod.release:
-    edit_on_github_branch = "v" + versionmod.version
-else:
-    edit_on_github_branch = "master"
-
-edit_on_github_source_root = ""
-edit_on_github_doc_root = "docs"
-
-## -- Options for the edit_on_github extension ----------------------------------------
-
 if eval(setup_cfg.get('edit_on_github')):
     extensions += ['astropy.sphinx.ext.edit_on_github']
 
-    versionmod = __import__(setup_cfg['package_name'] + '.version')
-    edit_on_github_project = setup_cfg['github_project']
+    # Don't import the module as "version" or it will override the
+    # "version" configuration parameter
+    from astroquery import version as versionmod
+    edit_on_github_project = "astropy/astroquery"
     if versionmod.release:
         edit_on_github_branch = "v" + versionmod.version
     else:

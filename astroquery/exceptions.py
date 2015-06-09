@@ -3,8 +3,10 @@
 Custom exceptions used in the astroquery query classes
 """
 
+from astropy.utils.exceptions import AstropyWarning
+
 __all__ = ['TimeoutError', 'InvalidQueryError', 'RemoteServiceError',
-           'TableParseError', 'LoginError']
+           'TableParseError', 'LoginError', 'NoResultsWarning']
 
 
 class TimeoutError(Exception):
@@ -19,13 +21,15 @@ class TimeoutError(Exception):
 class InvalidQueryError(Exception):
     pass
 
+
 class TableParseError(Exception):
     """
-    Errors related to VOTable parsing.  
+    Errors related to VOTable parsing.
     These should be either submitted as issues to astropy or to the originating
     service.
     """
     pass
+
 
 class RemoteServiceError(Exception):
     """
@@ -34,9 +38,16 @@ class RemoteServiceError(Exception):
     """
     pass
 
+
 class LoginError(Exception):
     """
     Errors due to failed logins.  Should only be raised for services for which
     a login is a prerequisite for the requested action
     """
     pass
+
+
+class NoResultsWarning(AstropyWarning):
+    """
+    Astroquery warning class to be issued when a query returns no result.
+    """

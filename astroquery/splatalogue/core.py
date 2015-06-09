@@ -5,14 +5,14 @@ ftp://ftp.cv.nrao.edu/NRAO-staff/bkent/slap/idl/
 
 :author: Adam Ginsburg <adam.g.ginsburg@gmail.com>
 """
+import warnings
 from astropy.io import ascii
+from astropy import units as u
 from ..query import BaseQuery
 from ..utils import commons, async_to_sync
 from ..utils.docstr_chompers import prepend_docstr_noreturns
-from astropy import units as u
-from . import SLAP_URL, QUERY_URL, SPLATALOGUE_TIMEOUT, LINES_LIMIT
+from . import conf
 from . import load_species_table
-import warnings
 
 __all__ = ['Splatalogue', 'SplatalogueClass']
 
@@ -23,10 +23,10 @@ __all__ = ['Splatalogue', 'SplatalogueClass']
 @async_to_sync
 class SplatalogueClass(BaseQuery):
 
-    SLAP_URL = SLAP_URL()
-    QUERY_URL = QUERY_URL()
-    TIMEOUT = SPLATALOGUE_TIMEOUT()
-    LINES_LIMIT = LINES_LIMIT()
+    SLAP_URL = conf.slap_url
+    QUERY_URL = conf.query_url
+    TIMEOUT = conf.timeout
+    LINES_LIMIT = conf.lines_limit
     versions = ('v1.0', 'v2.0')
     # global constant, not user-configurable
     ALL_LINE_LISTS = ('Lovas', 'SLAIM', 'JPL', 'CDMS', 'ToyoMA', 'OSU',
@@ -54,7 +54,7 @@ class SplatalogueClass(BaseQuery):
                        "ka":" GBT/VLA Ka (26-40 GHz)",
                        "q":"GBT/VLA Q (38-50 GHz)",
                        "w":"GBT W (67-93.3 GHz)",
-                       "mustang":"GBT Mustang (80-100 GHz)",}
+                       "mustang":"GBT Mustang (80-100 GHz)", }
 
     def __init__(self, **kwargs):
         """
@@ -97,8 +97,8 @@ class SplatalogueClass(BaseQuery):
             return self._species_ids
 
     def _default_kwargs(self):
-        kwargs = dict(min_frequency=0*u.GHz,
-                      max_frequency=100*u.THz,
+        kwargs = dict(min_frequency=0 * u.GHz,
+                      max_frequency=100 * u.THz,
                       chemical_name='',
                       line_lists=self.ALL_LINE_LISTS,
                       line_strengths=('ls1', 'ls3', 'ls4', 'ls5'),
@@ -224,8 +224,9 @@ class SplatalogueClass(BaseQuery):
             A dictionary of keywords
         """
 
-        payload = {'submit':'Search',
-                   'frequency_units':'GHz'}
+        payload = {'submit': 'Search',
+                   'frequency_units': 'GHz',
+                   }
 
         if band != 'any':
             if band not in self.FREQUENCY_BANDS:
@@ -238,7 +239,7 @@ class SplatalogueClass(BaseQuery):
             min_frequency = min_frequency.to(u.GHz, u.spectral())
             max_frequency = max_frequency.to(u.GHz, u.spectral())
             if min_frequency > max_frequency:
-                min_frequency, max_frequency = max_frequency,min_frequency
+                min_frequency, max_frequency = max_frequency, min_frequency
 
             payload['from'] = min_frequency.value
             payload['to'] = max_frequency.value
@@ -262,6 +263,7 @@ class SplatalogueClass(BaseQuery):
         if energy_max is not None:
             payload['energy_range_to'] = float(energy_max)
         if energy_type is not None:
+            validate_energy_type(energy_type)
             payload['energy_range_type'] = energy_type
 
         if intensity_type is not None:
@@ -279,7 +281,7 @@ class SplatalogueClass(BaseQuery):
 
         if exclude is not None:
             for e in exclude:
-                payload['no_'+e] = 'no_'+e
+                payload['no_' + e] = 'no_' + e
 
         if only_NRAO_recommended:
             payload['include_only_nrao'] = 'include_only_nrao'
@@ -333,7 +335,7 @@ class SplatalogueClass(BaseQuery):
             if min_frequency is None or max_frequency is None:
                 raise ValueError("Must specify either min/max frequency or a valid Band.")
 
-    @prepend_docstr_noreturns("\n"+_parse_kwargs.__doc__)
+    @prepend_docstr_noreturns("\n" + _parse_kwargs.__doc__)
     def query_lines_async(self, min_frequency=None, max_frequency=None, **kwargs):
         """
         Returns
@@ -377,12 +379,12 @@ class SplatalogueClass(BaseQuery):
         """
 
         try:
-            result = ascii.read(response.content.split('\n'),
+            result = ascii.read(response.text.split('\n'),
                                 delimiter=':',
                                 format='basic')
         except TypeError:
             # deprecated
-            result = ascii.read(response.content.split('\n'),
+            result = ascii.read(response.text.split('\n'),
                                 delimiter=':',
                                 Reader=ascii.Basic)
 
@@ -416,5 +418,9 @@ class SplatalogueClass(BaseQuery):
                 table.rename_column(cn, long_to_short[cn])
         return table
 
+def validate_energy_type(etype):
+    valid_energy_types = ('el_cm1','eu_cm1','eu_k','el_k')
+    if etype not in valid_energy_types:
+        raise ValueError("Energy type must be one of {0}".format(valid_energy_types))
 
 Splatalogue = SplatalogueClass()

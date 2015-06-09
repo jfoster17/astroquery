@@ -8,30 +8,30 @@ from astropy import coordinates as coord
 
 from ..query import BaseQuery
 from ..utils import commons
-from . import NVAS_SERVER, NVAS_TIMEOUT
+from . import conf
 
-__all__ = ["Nvas","NvasClass"]
+__all__ = ["Nvas", "NvasClass"]
 
 
 class NvasClass(BaseQuery):
-    URL = NVAS_SERVER()
-    TIMEOUT = NVAS_TIMEOUT()
-    valid_bands = ["all","L","C","X","U","K","Q"]
+    URL = conf.server
+    TIMEOUT = conf.timeout
+    valid_bands = ["all", "L", "C", "X", "U", "K", "Q"]
 
     band_freqs = {
-        "L": (1,2),
-        "S": (2,4),
-        "C": (4,8),
-        "X": (8,12),
-        "U": (12,18),
-        "K": (18,26.5),
-        "Ka": (26.5,40),
-        "Q": (30,50),
-        "V": (50,75),
-        "E": (60,90),
-        "W": (75,110),
-        "F": (90,140),
-        "D": (110,170),
+        "L": (1, 2),
+        "S": (2, 4),
+        "C": (4, 8),
+        "X": (8, 12),
+        "U": (12, 18),
+        "K": (18, 26.5),
+        "Ka": (26.5, 40),
+        "Q": (30, 50),
+        "V": (50, 75),
+        "E": (60, 90),
+        "W": (75, 110),
+        "F": (90, 140),
+        "D": (110, 170),
     }
 
     def get_images(self, coordinates, radius=0.25 * u.arcmin, max_rms=10000,
@@ -121,7 +121,7 @@ class NvasClass(BaseQuery):
         if verbose:
             print("{num} images found.".format(num=len(image_urls)))
 
-        return [commons.FileContainer(U) for U in image_urls]
+        return [commons.FileContainer(U, encoding='binary') for U in image_urls]
 
     def get_image_list(self, coordinates, radius=0.25 * u.arcmin, max_rms=10000,
                        band="all", get_uvfits=False, get_query_payload=False):
@@ -167,7 +167,7 @@ class NvasClass(BaseQuery):
         if get_query_payload:
             return request_payload
         response = commons.send_request(Nvas.URL, request_payload, Nvas.TIMEOUT)
-        image_urls = self.extract_image_urls(response.content, get_uvfits=get_uvfits)
+        image_urls = self.extract_image_urls(response.text, get_uvfits=get_uvfits)
         return image_urls
 
     def extract_image_urls(self, html_in, get_uvfits=False):
@@ -215,13 +215,13 @@ def _parse_coordinates(coordinates):
         The formatted coordinates as string
 
     """
-    c = commons.parse_coordinates(coordinates)
+    c = commons.parse_coordinates(coordinates).transform_to(coord.ICRS)
     # numpy 1.5 returns an object array, so we need to force it to a pair of strings
     # numpy 1.6, 1.7 apparently return string arrays and concatenate without issue
     # hack to deal with variably astropy coordinates API
-    hms = c.icrs.ra.hms
-    dms = c.icrs.dec.dms
-    radecstr = "%02i %02i %09.6f %+03i %02i %09.6f" % (hms+dms)
+    hms = c.ra.hms
+    dms = c.dec.dms
+    radecstr = "%02i %02i %09.6f %+03i %02i %09.6f" % (hms + dms)
     return radecstr
 
 

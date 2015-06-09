@@ -1,7 +1,62 @@
-0.2 (unreleased)
+0.3 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- None yet
+
+0.2.4 (2015-03-27)
+------------------
+
+- Bugfix for ``utils.commons.send_request()``: Raise exception if error status
+  is returned in the response. (#491)
+- Update for ALMA Cycle 3 API change (#500)
+- Added LCOGT Archive support (#537)
+- Refactored LAMDA to match the standard API and added a critical density
+  calculation utility (#546)
+
+0.2.3 (2014-09-30)
+------------------
+
+
+- AstroResponse has been removed, which means that all cached objects will have
+  new hashes.  You should clear your cache: for most users, that means
+  ``rm -r ~/.astropy/cache/astroquery/`` (#418)
+- In ESO and ALMA, default to *not* storing your password.  New keyword
+  ``store_password=False``.  (#415)
+- In ESO, fixed a form activation issue triggered in ESO ``retrieve_data()``,
+  updated file download link triggered by server side change.
+  More interesting, made ``username`` optional in ``login()``:
+  instead, you can now configure your preferred ``username``.
+  Finally, automatic login is now used by ``retrieve_data()``, if configured. (#420, #427)
+- Bugfix for UKIDSS: Login now uses the correct session to retrieve the data
+  (#425)
+- ALMA - many new features, including selective file retrieval.  Fixes many errors that
+  were unnoticed in the previous version (#433)
+- ALMA - add ``help`` method and pass payload keywords on correctly.  Validate
+  the payload before querying. (#438)
+
+0.2.2 (2014-09-10)
+------------------
+
+- Support direct transmission of SQL queries to the SDSS server (#410)
+- Added email/text job completion alert (#407) to the CosmoSim tool (#267).
+- ESO archive now supports HARPS/FEROS reprocessed data queries (#412)
+- IPython notebook checker in the ESO tool is now compatible with regular
+  python (#413)
+- Added new tool: ALMA archive query tool
+  http://astroquery.readthedocs.org/en/latest/alma/alma.html
+  (#411)
+- setup script and installation fixes
+
+0.2 (2014-08-17)
+----------------
+
+- New tools: ESO, GAMA, xmatch, skyview, OEC
+- Consistent with astropy 0.4 API for coordinates
+- Now uses the astropy affiliated template
+- Python 3 compatibility dramatically improved
+- Caching added and enhanced: the default cache directory is
+  ``~/.astropy/cache/astroquery/[service_name]``
+- Services with separate login pages can be accessed
 
 
 0.1 (2013-09-19)

@@ -8,7 +8,9 @@ from __future__ import print_function
 
 from astropy.tests.helper import remote_data, pytest
 
+
 @remote_data
-class TestDummyClass:
+class TestTemplateClass:
     # now write tests for each method here
-    pass
+    def test_this(self):
+        pass

@@ -3,7 +3,8 @@
 Astroquery
 ==========
 
-This is the documentation for the Astroquery affiliated package of astropy_.
+This is the documentation for the Astroquery affiliated package of `astropy
+<http://www.astropy.org>`__.
 
 Code and issue tracker are on `GitHub <https://github.com/astropy/astroquery>`_.
 
@@ -22,31 +23,42 @@ Check out the :doc:`gallery` for some nice examples.
 
 Installation
 ------------
-Astroquery must be installed from source:
+The latest version of astroquery can be pip installed:
 
 .. code-block:: bash
 
+    $ pip install astroquery
+
+and the 'bleeding edge' master version:
+
+.. code-block:: bash
+
+   $ pip install https://github.com/astropy/astroquery/archive/master.zip
+
+or cloned and installed from source:
+
+.. code-block:: bash
+
+    $ # If you have a github account:
     $ git clone git@github.com:astropy/astroquery.git
+    $ # If you do not: 
+    $ git clone https://github.com/astropy/astroquery.git
     $ cd astroquery
     $ python setup.py install
-
-pip install also works:
-
-.. code-block:: bash
-
-    $ pip install git+http://github.com/astropy/astroquery.git#egg=astroquery
 
 Requirements
 ````````````
 
+Astroquery works with Python 2.7 and 3.3 or later.
+
 The following packages are required for astroquery installation & use:
 
-* `numpy <http://www.numpy.org>`_
-* astropy_ (v>=0.3)
+* `numpy <http://www.numpy.org>`_ >= 1.6
+* `astropy <http://www.astropy.org>`__ (>=0.4)
 * `requests <http://docs.python-requests.org/en/latest/>`_
-* `keyring <https://pypi.python.org/pypi/keyring>`_ (required only for the
-  `~astroquery.eso` module)
-* `lxml <http://lxml.de/>`_ (required only for the `~astroquery.eso` module)
+* `keyring <https://pypi.python.org/pypi/keyring>`_ (required for the
+  `~astroquery.eso` and `~astroquery.alma` modules)
+* `Beautiful Soup <http://www.crummy.com/software/BeautifulSoup/>`_
 
 Using astroquery
 ----------------
@@ -70,24 +82,25 @@ All query tools allow coordinate-based queries:
 
 .. code-block:: python
 
-    >>> import astropy.coordinates as coord
+    >>> from astropy import coordinates
     >>> import astropy.units as u
     >>> # works only for ICRS coordinates:
-    >>> c = coord.ICRS("05h35m17.3s -05h23m28s")
+    >>> c = coordinates.SkyCoord("05h35m17.3s -05d23m28s", frame='icrs')
     >>> r = 5 * u.arcminute
     >>> result_table = Simbad.query_region(c, radius=r)
-    >>> result_table.pprint(show_unit=True)
-       MAIN_ID           RA           DEC      ... COO_QUAL COO_WAVELENGTH     COO_BIBCODE
-                      "h:m:s"       "d:m:s"    ...
-    -------------- ------------- ------------- ... -------- -------------- -------------------
-         HD  38875 05 34 59.7297 -80 51 09.082 ...        A              O 2007A&A...474..653V
-    TYC 9390-799-1 05 33 58.2222 -80 50 18.575 ...        B                1998A&A...335L..65H
+    >>> result_table.pprint(show_unit=True, max_width=80, max_lines=5)
+      MAIN_ID         RA          DEC      ... COO_WAVELENGTH     COO_BIBCODE
+                   "h:m:s"      "d:m:s"    ...
+    ------------ ------------ ------------ ... -------------- -------------------
+           M  42   05 35 17.3    -05 23 28 ...                1981MNRAS.194..693L
+             ...          ...          ... ...            ...                 ...
+    V* V2114 Ori 05 35 01.671 -05 26 36.30 ...              I 2003yCat.2246....0C
 
 
 For additional guidance and examples, read the documentation for the individual services below.
 
 Available Services
-------------------
+==================
 
 If you're new to Astroquery, a good place to start is the :doc:`gallery`:
 
@@ -115,6 +128,12 @@ The following modules have been completed using a common API:
   nvas/nvas.rst
   gama/gama.rst
   eso/eso.rst
+  xmatch/xmatch.rst
+  atomic/atomic.rst
+  alma/alma.rst
+  skyview/skyview.rst
+  nasa_ads/nasa_ads.rst
+  heasarc/heasarc.rst
 
 These others are functional, but do not follow a common & consistent API:
 
@@ -127,6 +146,89 @@ These others are functional, but do not follow a common & consistent API:
   sha/sha.rst
   lamda/lamda.rst
   ogle/ogle.rst
+  open_exoplanet_catalogue/open_exoplanet_catalogue.rst
+  cosmosim/cosmosim.rst
+
+Catalog, Archive, and Other
+===========================
+
+A second index of the services by the type of data they serve.  Some services
+perform many tasks and are listed more than once.
+
+Catalogs
+--------
+
+The first serve catalogs, which generally return one row of information for
+each source (though they may return many catalogs that *each* have one row
+for each source)
+
+.. toctree::
+  :maxdepth: 1
+
+  alfalfa/alfalfa.rst
+  gama/gama.rst
+  irsa/irsa.rst
+  irsa/irsa_dust.rst
+  ned/ned.rst
+  ogle/ogle.rst
+  open_exoplanet_catalogue/open_exoplanet_catalogue.rst
+  sdss/sdss.rst
+  sha/sha.rst
+  simbad/simbad.rst
+  ukidss/ukidss.rst
+  vizier/vizier.rst
+  xmatch/xmatch.rst
+
+Archives
+--------
+
+Archive services provide data, usually in FITS images or spectra.  They will
+generally return a table listing the available data first.
+
+.. toctree::
+  :maxdepth: 1
+
+  alfalfa/alfalfa.rst
+  alma/alma.rst
+  eso/eso.rst
+  fermi/fermi.rst
+  heasarc/heasarc.rst
+  irsa/irsa.rst
+  magpis/magpis.rst
+  ned/ned.rst
+  nrao/nrao.rst
+  nvas/nvas.rst
+  sdss/sdss.rst
+  sha/sha.rst
+  ukidss/ukidss.rst
+  skyview/skyview.rst
+
+Simulations
+-----------
+
+Simulation services query databases of simulated or synthetic data
+
+.. toctree::
+  :maxdepth: 1
+
+  besancon/besancon.rst
+  cosmosim/cosmosim.rst
+
+Other
+-----
+
+There are other astronomically significant services, e.g. line list and
+atomic/molecular cross section and collision rate services, that don't fit the
+above categories.  
+
+.. toctree::
+  :maxdepth: 1
+
+  atomic/atomic.rst
+  lamda/lamda.rst
+  nist/nist.rst
+  splatalogue/splatalogue.rst
+  nasa_ads/nasa_ads.rst
 
 
 Developer documentation

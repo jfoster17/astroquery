@@ -1,12 +1,12 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 from __future__ import print_function
 
-import tempfile
 import re
 from collections import namedtuple
 from xml.dom.minidom import parseString
 from datetime import datetime
 
+from astropy.extern import six
 import astropy.units as u
 import astropy.coordinates as coord
 import astropy.io.votable as votable
@@ -14,26 +14,26 @@ from astropy import __version__ as ASTROPY_VERSION
 
 from ..query import BaseQuery
 from ..utils import commons
-from . import (HUBBLE_CONSTANT,
-               CORRECT_REDSHIFT,
-               OUTPUT_COORDINATE_FRAME,
-               OUTPUT_EQUINOX,
-               SORT_OUTPUT_BY)
-from . import NED_SERVER, NED_TIMEOUT
-from ..exceptions import TableParseError,RemoteServiceError
+from . import conf
+from ..exceptions import TableParseError, RemoteServiceError
 
-__all__ = ["Ned","NedClass"]
+__all__ = ["Ned", "NedClass"]
 
 
 class NedClass(BaseQuery):
+    """
+    Class for querying the NED (NASA/IPAC Extragalactic Database) system
+
+    http://ned.ipac.caltech.edu/
+    """
     # make configurable
-    BASE_URL = NED_SERVER()
+    BASE_URL = conf.server
     OBJ_SEARCH_URL = BASE_URL + 'nph-objsearch'
     ALL_SKY_URL = BASE_URL + 'nph-allsky'
     DATA_SEARCH_URL = BASE_URL + 'nph-datasearch'
     IMG_DATA_URL = BASE_URL + 'imgdata'
     SPECTRA_URL = BASE_URL + 'NEDspectra'
-    TIMEOUT = NED_TIMEOUT()
+    TIMEOUT = conf.timeout
     Options = namedtuple('Options', ('display_name', 'cgi_name'))
 
     PHOTOMETRY_OUT = {1: Options('Data as Published and Homogenized (mJy)', 'bot'),
@@ -171,14 +171,14 @@ class NedClass(BaseQuery):
         else:
             try:
                 c = commons.parse_coordinates(coordinates)
-                if hasattr(c,'galactic') and (c.galactic==c):
+                if c.frame.name == 'galactic':
                     request_payload['in_csys'] = 'Galactic'
                     request_payload['lon'] = c.l.degree
                     request_payload['lat'] = c.b.degree
                 # for any other, convert to ICRS and send
                 else:
                     request_payload['in_csys'] = 'Equatorial'
-                    ra,dec = commons.coord_to_radec(c)
+                    ra, dec = commons.coord_to_radec(c)
                     request_payload['lon'] = ra
                     request_payload['lat'] = dec
                 request_payload['search_type'] = 'Near Position Search'
@@ -363,7 +363,7 @@ class NedClass(BaseQuery):
         image_urls = self.get_image_list(object_name, get_query_payload=get_query_payload)
         if get_query_payload:
             return image_urls
-        return [commons.FileContainer(U) for U in image_urls]
+        return [commons.FileContainer(U, encoding='binary') for U in image_urls]
 
     def get_spectra(self, object_name, get_query_payload=False):
         """
@@ -407,7 +407,7 @@ class NedClass(BaseQuery):
         image_urls = self.get_image_list(object_name, item='spectra', get_query_payload=get_query_payload)
         if get_query_payload:
             return image_urls
-        return [commons.FileContainer(U) for U in image_urls]
+        return [commons.FileContainer(U, encoding='binary') for U in image_urls]
 
     def get_image_list(self, object_name, item='image', get_query_payload=False):
         """
@@ -438,7 +438,7 @@ class NedClass(BaseQuery):
             return request_payload
         url = Ned.SPECTRA_URL if item == 'spectra' else Ned.IMG_DATA_URL
         response = commons.send_request(url, request_payload, Ned.TIMEOUT, request_type='GET')
-        return self.extract_image_urls(response.content)
+        return self.extract_image_urls(response.text)
 
     def extract_image_urls(self, html_in):
         """
@@ -579,10 +579,10 @@ class NedClass(BaseQuery):
         ----------
         request_payload : dict
         """
-        request_payload['hconst'] = HUBBLE_CONSTANT()
+        request_payload['hconst'] = conf.hubble_constant
         request_payload['omegam'] = 0.27
         request_payload['omegav'] = 0.73
-        request_payload['corr_z'] = CORRECT_REDSHIFT()
+        request_payload['corr_z'] = conf.correct_redshift
 
     def _set_output_options(self, request_payload):
         """
@@ -592,9 +592,9 @@ class NedClass(BaseQuery):
         ----------
         request_payload : dict
         """
-        request_payload['out_csys'] = OUTPUT_COORDINATE_FRAME()
-        request_payload['out_equinox'] = OUTPUT_EQUINOX()
-        request_payload['obj_sort'] = SORT_OUTPUT_BY()
+        request_payload['out_csys'] = conf.output_coordinate_frame
+        request_payload['out_equinox'] = conf.output_equinox
+        request_payload['obj_sort'] = conf.sort_output_by
 
     def _parse_result(self, response, verbose=False):
         """
@@ -615,10 +615,8 @@ class NedClass(BaseQuery):
         if not verbose:
             commons.suppress_vo_warnings()
         try:
-            tf = tempfile.NamedTemporaryFile()
-            tf.write(response.content.encode('utf-8'))
-            tf.flush()
-            first_table = votable.parse(tf.name, pedantic=False).get_first_table()
+            tf = six.BytesIO(response.content)
+            first_table = votable.parse(tf, pedantic=False).get_first_table()
             # For astropy version < 0.3 returns tables that have field ids as col names
             if ASTROPY_VERSION < '0.3':
                 table = first_table.to_table()
@@ -641,6 +639,7 @@ class NedClass(BaseQuery):
 
 Ned = NedClass()
 
+
 def _parse_radius(radius):
     """
     Parses the radius and returns it in the format expected by NED.
@@ -655,7 +654,6 @@ def _parse_radius(radius):
         The value of the radius in arcminutes.
     """
     return coord.Angle(radius).to('arcmin').value
-
 
 
 def _check_ned_valid(string):

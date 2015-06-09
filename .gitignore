@@ -11,14 +11,24 @@ __pycache__
 
 # Other generated files
 */version.py
-astroquery/astroquery.cfg
+*/cython_version.py
 
 htmlcov
 .coverage
+MANIFEST
 
 # Sphinx
 _build
 docs/api
+docs/_build
+
+# Eclipse editor project files
+.project
+.pydevproject
+.settings
+
+# Pycharm editor project files
+.idea
 
 # Packages/installer info
 *.egg
@@ -45,3 +55,6 @@ distribute-*.tar.gz
 .settings
 .project
 .pydevproject
+
+# Pycharm
+.idea

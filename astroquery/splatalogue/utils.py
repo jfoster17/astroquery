@@ -5,9 +5,23 @@ Utilities for working with Splatalogue query results
 import numpy as np
 import astropy
 
-column_headings_map = {'Log<sub>10</sub> (A<sub>ij</sub>)':'log10(Aij)',
+# Remap column headings to something IPAC-compatible
+column_headings_map = {'Log<sub>10</sub> (A<sub>ij</sub>)': 'log10_Aij',
+                       'Resolved QNs': 'QNs',
+                       'CDMS/JPL Intensity':'CDMSJPL_Intensity',
+                       'S<sub>ij</sub>':'Sij',
+                       'Freq-GHz':'FreqGHz',
+                       'Meas Freq-GHz':'MeasFreqGHz',
+                       'Lovas/AST Intensity':'LovasAST_Intensity',
+                       'E_L (cm^-1)':'EL_percm',
+                       'E_L (K)':'EL_K',
+                       'E_U (cm^-1)':'EU_percm',
                        'E_U (K)':'EU_K',
-                       'Resolved QNs':'QNs'}
+                       'Chemical Name':'ChemicalName',
+                       'Freq Err':'FreqErr',
+                       'Meas Freq Err':'MeasFreqErr',
+                      }
+
 
 def clean_column_headings(table, renaming_dict=column_headings_map):
     """
@@ -20,6 +34,7 @@ def clean_column_headings(table, renaming_dict=column_headings_map):
             table.rename_column(key, renaming_dict[key])
 
     return table
+
 
 def merge_frequencies(table, prefer='measured', theor_kwd='Freq-GHz',
                       meas_kwd='Meas Freq-GHz'):
@@ -34,11 +49,11 @@ def merge_frequencies(table, prefer='measured', theor_kwd='Freq-GHz',
         Which of the two colums to prefer if there is a conflict
     """
 
-    if prefer=='measured':
+    if prefer == 'measured':
         Freq = np.copy(table[theor_kwd])
         measmask = np.logical_not(table[meas_kwd].mask)
         Freq[measmask] = table[meas_kwd][measmask]
-    elif prefer=='theoretical':
+    elif prefer == 'theoretical':
         Freq = np.copy(table[meas_kwd])
         theomask = np.logical_not(table[theor_kwd].mask)
         Freq[measmask] = table[theor_kwd][theomask]
@@ -46,11 +61,12 @@ def merge_frequencies(table, prefer='measured', theor_kwd='Freq-GHz',
         raise ValueError('prefer must be one of "measured" or "theoretical"')
 
     index = table.index_column(theor_kwd)
-    table.remove_columns([theor_kwd,meas_kwd])
+    table.remove_columns([theor_kwd, meas_kwd])
     newcol = astropy.table.Column(name='Freq', data=Freq)
     table.add_column(newcol, index=index)
 
     return table
+
 
 def minimize_table(table, columns=['Species', 'Chemical Name',
                                    'Resolved QNs', 'Freq-GHz', 'Meas Freq-GHz',

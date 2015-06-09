@@ -40,8 +40,8 @@ data.
     
     # Now first instantiate a Ukidss object with login credentials
 
-    >>> u_obj = Ukidss(username='xyz', password='secret',
-    ...                community='your_community')
+    >>> u_obj = Ukidss(username='xyz', password='secret', # doctest: +SKIP
+    ...                community='your_community')        # doctest: +SKIP
 
     >>> # The prompt appears indicating successful login
 
@@ -56,9 +56,9 @@ permitted only for image queries.
 .. code-block:: python
 
     >>> from astroquery.ukidss import Ukidss
-    >>> u_obj = Ukidss(username='xyz', password='secret',
-    ...                community='your_community', database='UKIDSSDR8PLUS',
-    ...                programme_id='GPS')
+    >>> u_obj = Ukidss(username='xyz', password='secret',                    # doctest: +SKIP
+    ...                community='your_community', database='UKIDSSDR8PLUS', # doctest: +SKIP
+    ...                programme_id='GPS')                                   # doctest: +SKIP
     >>> 
 
 At any given time you may if you wish check your login status (continuing from
@@ -66,7 +66,7 @@ the above example):
 
 .. code-block:: python
 
-    >>> u_obj.logged_in()
+    >>> u_obj.logged_in() # doctest: +SKIP
     
     True
 
@@ -75,8 +75,8 @@ object - say ``u_obj`` then you should do:
 
 .. code-block:: python
 
-    >>> u_obj.programme_id = 'new_id_here'
-    >>> u_obj.database = 'new_database_here'
+    >>> u_obj.programme_id = 'new_id_here'   # doctest: +SKIP
+    >>> u_obj.database = 'new_database_here' # doctest: +SKIP
 
 The above examples mention ``programme_id`` that specifies the catalog
 or survey you wish to query. If you would like to get a list of the commonly
@@ -113,7 +113,7 @@ SESAME. Coordinates may be entered using the suitable object from
 
 .. code-block:: python
 
-    >>> from astroquery.ukidss import
+    >>> from astroquery.ukidss import Ukidss
     >>> images = Ukidss.get_images("m1")
 
     Found 1 targets
@@ -129,7 +129,7 @@ that you already have a `~astroquery.ukidss.UkidssClass` object ``u_obj`` instan
 
 .. code-block:: python
 
-    >>> images = u_obj.get_images("m1")               
+    >>> images = u_obj.get_images("m1") # doctest: +SKIP
 
 There are several optional parameters that you can specify in image
 queries. For instance to specify the image size you should set the
@@ -149,8 +149,10 @@ parameters will no longer be effective.
     >>> from astroquery.ukidss import Ukidss
     >>> import astropy.units as u
     >>> import astropy.coordinates as coord
-    >>> images = Ukidss.get_images(coord.Galactic(l=49.489, b=-0.27,
-    ...          unit=(u.deg, u.deg)), image_width=5 * u.arcmin)
+    >>> images = Ukidss.get_images(coord.SkyCoord(49.489, -0.27,
+    ...                                           unit=(u.deg, u.deg),
+    ...                                           frame='galactic'),
+    ...                            image_width=5 * u.arcmin)
 
         Found 6 targets
     Downloading http://surveys.roe.ac.uk/wsa/cgi-bin/getFImage.cgi?file=/disk24/wsa/ingest/fits/20060603_v1/w20060603_01510_sf_st_two.fit&mfid=2514752&extNo=1&lx=862&hx=1460&ly=1539&hy=2137&rf=270&flip=1&uniq=575_115_31_31555_1&xpos=300.1&ypos=299.7&band=J&ra=290.8256247&dec=14.56435
@@ -195,8 +197,9 @@ parameters. Let us now see a complete example to illustrate these points.
     >>> from astroquery.ukidss import Ukidss
     >>> import astropy.units as u
     >>> import astropy.coordinates as coord 
-    >>> image_urls = Ukidss.get_image_list(coord.ICRS(ra=83.633083,
-    ...          dec=22.0145, unit=(u.deg, u.deg)), frame_type='interleave',
+    >>> image_urls = Ukidss.get_image_list(coord.SkyCoord(ra=83.633083,
+    ...          dec=22.0145, unit=(u.deg, u.deg), frame='icrs'),
+    ...          frame_type='interleave',
     ...          programme_id="GCS", waveband="K", radius=20*u.arcmin)
     >>> image_urls
 
@@ -224,8 +227,10 @@ results are returned in a `~astropy.table.Table`.
     >>> from astroquery.ukidss import Ukidss
     >>> import astropy.coordinates as coord
     >>> import astropy.units as u
-    >>> table = Ukidss.query_region(coord.Galactic(l=10.625,
-    ...         b=-0.38,  unit=(u.deg, u.deg)), radius=6 * u.arcsec)
+    >>> table = Ukidss.query_region(coord.SkyCoord(10.625, -0.38,
+    ...                                            unit=(u.deg, u.deg),
+    ...                                            frame='galactic'),
+    ...                             radius=6 * u.arcsec)
     
     Downloading http://surveys.roe.ac.uk/wsa/tmp/tmp_sql/results1_4_45_58_24651.xml
     |===========================================| 4.6k/4.6k (100.00%)        00s

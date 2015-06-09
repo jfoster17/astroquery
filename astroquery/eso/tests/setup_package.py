@@ -1,11 +1,12 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+from __future__ import absolute_import
+
 import os
-# setup paths to the test data
-# can specify a single file or a list of files
+
+
 def get_package_data():
     paths = [os.path.join('data', '*.pickle'),
              os.path.join('data', '*.html'),
-             os.path.join('data', '*.tbl')]
-    # you can also enlist files individually by names
-    # finally construct and return a dict for the sub module
+             os.path.join('data', '*.tbl'),
+             ]
     return {'astroquery.eso.tests': paths}

@@ -11,20 +11,17 @@ Getting started
 The following example illustrates an Besancon catalog/image query.  The API describes the
 relevant keyword arguments (of which there are many) 
 
-.. code-block:: python
-
-    >>> from astroquery import besancon
-    >>> # besancon_model = besancon.request_besancon('your@email.net',10.5,0.0)
-    >>> import astropy.io.ascii as asciitable
-    >>> from astropy.io.ascii import besancon as besancon_reader
-    >>> B = asciitable.read(besancon_model,Reader=besancon_reader.BesanconFixed,guess=False)
-    >>> B.pprint()
+.. note::
+   These examples are improperly formatted because they are not safe to run
+   generally!  The Besancon servers are hosted by individuals and not mean to
+   handle large or repeated requests, so we disable *all* automated testing.
 
 A successful run should look something like this
 
 .. code-block:: python
 
-    >>> besancon_model = request_besancon('your@email.net',10.5,0.0)
+    >>> from astroquery.besancon import Besancon
+    >>> #besancon_model = Besancon.query(glon=10.5, glat=0.0, email='your@email.net')
 
     Waiting 30s for model to finish (elapsed wait time 30s, total 32)
     Loading page...
@@ -34,7 +31,9 @@ A successful run should look something like this
     Loading page...
     Waiting 30s for model to finish (elapsed wait time 120s, total 456)
     Loading page...
-    Downloaded        74752 of     11029183 bytes (  0.68%)
+    Awaiting Besancon file...
+    Downloading ftp://sasftp.obs-besancon.fr/modele/modele2003/1407398212.212272.resu
+    |========================================================================================================================================| 2.5M/2.5M (100.00%)         0s
 
     >>> # B.pprint()
      Dist  Mv   CL Typ   LTef logg Age Mass  J-K   J-H   V-K    H-K    K    [Fe/H]   l     b     Av   Mbol 
@@ -72,7 +71,21 @@ A successful run should look something like this
 .. note::
     These tests are commented out (and will fail) because I don't want to put
     unnecessary strain on the Besancon servers by running queries every time we
-    test.  Also I think the example must be wrong.
+    test.
+
+Reading a previously downloaded file
+------------------------------------
+
+If you've downloaded a ``.resu``, you can parse it with the custom parser in astroquery:
+
+.. code-block:: python
+
+   >>> from astroquery.besancon import parse_besancon_model_file
+   >>> tbl = parse_besancon_model_file('file.resu')
+   >>> tbl.pprint()
+     Dist   Mv   CL Typ  LTef logg Age Mass  J-H   H-K   J-K   V-K    V    [Fe/H]   l     b     Av   Mbol
+    ------ ---- --- --- ----- ---- --- ---- ----- ----- ----- ----- ------ ------ ----- ----- ----- ------
+     0.091 10.2   5 7.2 3.559 4.85   7 0.48 0.601 0.223 0.824 4.175 15.133   0.02 10.62 -0.38 0.056  8.671
 
 
 Reference/API

@@ -19,54 +19,45 @@ website <http://simbad.u-strasbg.fr/simbad/>`_, use the ``simbad`` sub-package:
     ------------- ------------- ------------- ... -------- -------------- -------------------
     * tet01 Ori C 05 35 16.4637 -05 23 22.848 ...        A              O 2007A&A...474..653V
         
-Installation and Requirements    
+Installation and Requirements
 -----------------------------
 
-
-As an `astropy`_ affiliate, astroquery requires `astropy`_.  However, because
-astroquery relies heavily upon the ``astropy.coordinates`` module, the
-development version of `astropy`_ is required. `astropy`_ can be installed from
-pip:
-
-.. code-block:: bash
-
-    $ pip install git+http://github.com/astropy/astropy.git#egg=astropy
+Astroquery works with Python 2.7 and 3.3 or later.
+As an `astropy`_ affiliate, astroquery requires `astropy`_ version 0.4 or later.
 
 astroquery uses the `requests <http://docs.python-requests.org/en/latest/>`_
-module to communicate with the internet.  `requests`_ can also be installed with
-pip.
+module to communicate with the internet.  `BeautifulSoup
+<http://www.crummy.com/software/BeautifulSoup/>`_ is needed for HTML parsing
+for some services.  The `keyring <https://pypi.python.org/pypi/keyring>`_
+module is also required for accessing services that require a login.
+These can all be installed using `pip <https://pypi.python.org/pypi/pip>`_.
 
-The `first beta release`_ of astroquery can be downloaded or pip installed:
-
-.. code-block:: bash
-
-   $ pip install astroquery 
-   
-
-Or if pypi is down:   
-   
-.. code-block:: bash
-   
-   $ pip install https://github.com/astropy/astroquery/archive/v0.1.tar.gz
-
-
-If you'd like the latest development version, you can install it with the
-following commands:
+The latest version of astroquery can be pip installed:
 
 .. code-block:: bash
 
+    $ pip install astroquery
+
+and the 'bleeding edge' master version:
+
+.. code-block:: bash
+
+   $ pip install https://github.com/astropy/astroquery/archive/master.zip
+
+or cloned and installed from source:
+
+.. code-block:: bash
+
+    $ # If you have a github account:
     $ git clone git@github.com:astropy/astroquery.git
+    $ # If you do not: 
+    $ git clone https://github.com/astropy/astroquery.git
     $ cd astroquery
     $ python setup.py install
-
-pip install also works:
-
-.. code-block:: bash
-
-    $ pip install git+http://github.com/astropy/astroquery.git#egg=astroquery
     
 Using astroquery
 ----------------
+
 Importing astroquery on its own doesn't get you much: you need to import each
 sub-module specifically.  Check out the `docs`_
 to find a list of the tools available.  The `API`_ 
@@ -99,6 +90,12 @@ List of Modules
   * `Lamda <http://astroquery.readthedocs.org/en/latest/lamda/lamda.html>`_:             Leiden Atomic and Molecular Database; energy levels, radiative transitions, and collisional rates for astrophysically relevant atoms and molecules.
   * `Ogle <http://astroquery.readthedocs.org/en/latest/ogle/ogle.html>`_:               Optical Gravitational Lensing Experiment III; information on interstellar extinction towards the Galactic bulge.
   * `Splatalogue <http://astroquery.readthedocs.org/en/latest/splatalogue/splatalogue.html>`_: National Radio Astronomy Observatory (NRAO)-maintained (mostly) molecular radio and millimeter line list service.
+  * `CosmoSim <http://astroquery.readthedocs.org/en/latest/cosmosim/cosmosim.html>`_: The CosmoSim database provides results from cosmological simulations performed within different projects: the MultiDark project, the BolshoiP project, and the CLUES project. 
+  * `ESO Archive <http://astroquery.readthedocs.org/en/latest/eso/eso.html>`_
+  * `ALMA Archive <http://astroquery.readthedocs.org/en/latest/alma/alma.html>`_
+  * `GAMA database <http://astroquery.readthedocs.org/en/latest/gama/gama.html>`_
+  * `NVAS archive <http://astroquery.readthedocs.org/en/latest/nvas/nvas.html>`_
+  * `Open Expolanet Catalog (OEC) <http://astroquery.readthedocs.org/en/latest/open_exoplanet_catalogue/open_exoplanet_catalogue.html>`_
 
 Additional Links
 ----------------
@@ -107,7 +104,8 @@ Additional Links
 
 Maintained by `Adam Ginsburg`_ (`astropy.astroquery@gmail.com`_)
 
-To cite, use our `figshare`_ DOI (http://dx.doi.org/10.6084/m9.figshare.805208).
+To cite, use our `figshare`_ DOI (http://dx.doi.org/10.6084/m9.figshare.805208) or our Zenodo DOI.
+
 
 Badges
 ------
@@ -124,6 +122,13 @@ Badges
 .. image:: https://coveralls.io/repos/astropy/astroquery/badge.png
    :target: https://coveralls.io/r/astropy/astroquery
 
+.. image:: https://badges.gitter.im/astropy/astroquery.png
+   :target: https://gitter.im/astropy/astroquery
+
+.. image:: https://zenodo.org/badge/3821/astropy/astroquery.png
+   :target: http://dx.doi.org/10.5281/zenodo.11656
+            
+
 .. .. image:: https://d2weczhvl823v0.cloudfront.net/astropy/astroquery/trend.png
 ..    :alt: Bitdeli badge
 ..    :target: https://bitdeli.com/free
@@ -136,7 +141,7 @@ Badges
 .. _View on Github: https://github.com/astropy/astroquery/
 .. _docs: http://astroquery.readthedocs.org
 .. _Documentation: http://astroquery.readthedocs.org
-.. _first beta release: https://github.com/astropy/astroquery/tarball/v0.1
+.. _latest release: https://github.com/astropy/astroquery/tarball/v0.2
 .. _astropy.astroquery@gmail.com: mailto:astropy.astroquery@gmail.com
 .. _Adam Ginsburg: http://www.adamgginsburg.com
 .. _Blog: http://astropy.org/astroquery-blog

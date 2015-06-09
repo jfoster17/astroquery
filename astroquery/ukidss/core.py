@@ -1,11 +1,12 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 from __future__ import print_function
 
-import requests
 import warnings
 import re
 import time
 from math import cos, radians
+import requests
+from bs4 import BeautifulSoup
 
 from astropy.extern.six import BytesIO
 import astropy.units as u
@@ -13,9 +14,9 @@ import astropy.coordinates as coord
 import astropy.io.votable as votable
 
 from ..query import QueryWithLogin
-from ..exceptions import InvalidQueryError, TimeoutError
+from ..exceptions import InvalidQueryError, TimeoutError, NoResultsWarning
 from ..utils import commons
-from . import UKIDSS_SERVER, UKIDSS_TIMEOUT
+from . import conf
 from ..exceptions import TableParseError
 
 __all__ = ['Ukidss', 'UkidssClass', 'clean_catalog']
@@ -48,12 +49,12 @@ class UkidssClass(QueryWithLogin):
     queries.  Allows registered users to login, but defaults to using the
     public UKIDSS data sets.
     """
-    BASE_URL = UKIDSS_SERVER()
+    BASE_URL = conf.server
     LOGIN_URL = BASE_URL + "DBLogin"
     IMAGE_URL = BASE_URL + "GetImage"
     ARCHIVE_URL = BASE_URL + "ImageList"
     REGION_URL = BASE_URL + "WSASQL"
-    TIMEOUT = UKIDSS_TIMEOUT()
+    TIMEOUT = conf.timeout
 
     filters = {'all': 'all', 'J': 3, 'H': 4, 'K': 5, 'Y': 2,
                'Z': 1, 'H2': 6, 'Br': 7}
@@ -74,11 +75,11 @@ class UkidssClass(QueryWithLogin):
                               'Deep Extragalactic Survey': 104,
                               'Ultra Deep Survey': 105}
 
-    databases = ("UKIDSSDR9PLUS", "UKIDSSDR8PLUS", "UKIDSSDR7PLUS",
-                 "UKIDSSDR6PLUS", "UKIDSSDR5PLUS", "UKIDSSDR4PLUS",
-                 "UKIDSSDR3PLUS", "UKIDSSDR2PLUS", "UKIDSSDR1PLUS",
-                 "UKIDSSDR1", "UKIDSSEDRPLUS", "UKIDSSEDR", "UKIDSSSV",
-                 "WFCAMCAL08B")
+    all_databases = ("UKIDSSDR9PLUS", "UKIDSSDR8PLUS", "UKIDSSDR7PLUS",
+                     "UKIDSSDR6PLUS", "UKIDSSDR5PLUS", "UKIDSSDR4PLUS",
+                     "UKIDSSDR3PLUS", "UKIDSSDR2PLUS", "UKIDSSDR1PLUS",
+                     "UKIDSSDR1", "UKIDSSEDRPLUS", "UKIDSSEDR", "UKIDSSSV",
+                     "WFCAMCAL08B", "U09B8v20120403", "U09B8v20100414")
 
     def __init__(self, username=None, password=None, community=None,
                  database='UKIDSSDR7PLUS', programme_id='all'):
@@ -110,7 +111,7 @@ class UkidssClass(QueryWithLogin):
         if not response.ok:
             self.session = None
             response.raise_for_status()
-        if 'FAILED to log in' in response.content:
+        if 'FAILED to log in' in response.text:
             self.session = None
             raise Exception("Unable to log in with your given credentials.\n"
                             "Please try again.\n"
@@ -135,11 +136,13 @@ class UkidssClass(QueryWithLogin):
         sys = self._parse_system(kwargs.get('system'))
         request_payload['sys'] = sys
         if sys == 'J':
-            request_payload['ra'] = commons.parse_coordinates(args[0]).icrs.ra.degree
-            request_payload['dec'] = commons.parse_coordinates(args[0]).icrs.dec.degree
+            C = commons.parse_coordinates(args[0]).transform_to(coord.ICRS)
+            request_payload['ra'] = C.ra.degree
+            request_payload['dec'] = C.dec.degree
         elif sys == 'G':
-            request_payload['ra'] = commons.parse_coordinates(args[0]).galactic.l.degree
-            request_payload['dec'] = commons.parse_coordinates(args[0]).galactic.b.degree
+            C = commons.parse_coordinates(args[0]).transform_to(coord.Galactic)
+            request_payload['ra'] = C.l.degree
+            request_payload['dec'] = C.b.degree
         return request_payload
 
     def _parse_system(self, system):
@@ -271,7 +274,9 @@ class UkidssClass(QueryWithLogin):
         if verbose:
             print("Found {num} targets".format(num=len(image_urls)))
 
-        return [commons.FileContainer(U) for U in image_urls]
+        return [commons.FileContainer(U, encoding='binary',
+                                      remote_timeout=self.TIMEOUT)
+                for U in image_urls]
 
     @validate_frame
     @validate_filter
@@ -366,7 +371,7 @@ class UkidssClass(QueryWithLogin):
         response = self._ukidss_send_request(query_url, request_payload)
         response = self._check_page(response.url, "row")
 
-        image_urls = self.extract_urls(response.content)
+        image_urls = self.extract_urls(response.text)
         # different links for radius queries and simple ones
         if radius is not None:
             image_urls = [link for link in image_urls if ('fits_download' in
@@ -396,11 +401,7 @@ class UkidssClass(QueryWithLogin):
         """
         # Parse html input for links
         ahref = re.compile('href="([a-zA-Z0-9_\.&\?=%/:-]+)"')
-        try:
-            links = ahref.findall(html_in)
-        except TypeError:
-            # py3
-            links = ahref.findall(html_in.decode())
+        links = ahref.findall(html_in)
         return links
 
     def query_region(self, coordinates, radius=1 * u.arcmin,
@@ -531,7 +532,7 @@ class UkidssClass(QueryWithLogin):
         -------
         table : `~astropy.table.Table`
         """
-        table_links = self.extract_urls(response.content)
+        table_links = self.extract_urls(response.text)
         # keep only one link that is not a webstart
         if len(table_links) == 0:
             raise Exception("No VOTable found on returned webpage!")
@@ -548,7 +549,8 @@ class UkidssClass(QueryWithLogin):
             first_table = parsed_table.get_first_table()
             table = first_table.to_table()
             if len(table) == 0:
-                warnings.warn("Query returned no results, so the table will be empty")
+                warnings.warn("Query returned no results, so the table will "
+                              "be empty", NoResultsWarning)
             return table
         except Exception as ex:
             self.response = content
@@ -560,7 +562,7 @@ class UkidssClass(QueryWithLogin):
 
     def list_catalogs(self, style='short'):
         """
-        Returns a lsit of available catalogs in UKIDSS.
+        Returns a list of available catalogs in UKIDSS.
         These can be used as ``programme_id`` in queries.
 
         Parameters
@@ -583,10 +585,21 @@ class UkidssClass(QueryWithLogin):
                           "Returning catalog list in short format.\n")
             return list(self.ukidss_programmes_short.keys())
 
+    def _get_databases(self):
+        if self.logged_in():
+            response = self.session.get('http://surveys.roe.ac.uk:8080/wsa/getImage_form.jsp')
+        else:
+            response = requests.get('http://surveys.roe.ac.uk:8080/wsa/getImage_form.jsp')
+        root = BeautifulSoup(response.content)
+        databases = [x.attrs['value'] for x in
+                    root.find('select').findAll('option')]
+        return databases
+
     def list_databases(self):
         """
         List the databases available from the UKIDSS WFCAM archive
         """
+        self.databases = set(self.all_databases + self._get_databases())
         return self.databases
 
     def _ukidss_send_request(self, url, request_payload):
@@ -617,11 +630,15 @@ class UkidssClass(QueryWithLogin):
     def _check_page(self, url, keyword, wait_time=1, max_attempts=30):
         page_loaded = False
         while not page_loaded and max_attempts > 0:
-            response = requests.get(url)
+            if self.logged_in():
+                response = self.session.get(url)
+            else:
+                response = requests.get(url)
             self.response = response
-            if re.search("error", response.content, re.IGNORECASE):
+            content = response.text
+            if re.search("error", content, re.IGNORECASE):
                 raise InvalidQueryError("Service returned with an error!  Check self.response for more information.")
-            elif re.search(keyword, response.content, re.IGNORECASE):
+            elif re.search(keyword, content, re.IGNORECASE):
                 page_loaded = True
             max_attempts -= 1
             # wait for wait_time seconds before checking again
