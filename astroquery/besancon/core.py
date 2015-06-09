@@ -50,7 +50,7 @@ keyword_defaults = {
     'iband':1,
     'band0':[8] * 9,
     'bandf':[25] * 9,
-    'colind':["B-V", "U-B", "V-I", "V-K", ],
+    'colind':["J-H","H-K","J-K","V-K",],
     'nic': 4,
     'klea':1,
     'sc':[[0, 0, 0]] * 9,
